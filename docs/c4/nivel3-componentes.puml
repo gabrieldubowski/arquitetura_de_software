@@ -1,0 +1,20 @@
+@startuml nivel3-componentes
+!include <C4/C4_Component>
+title Sysop Squad - Nível 3: Componentes do Ticket Service / Worker
+
+Container_Boundary(c, "Ticket Service + Triage Worker") {
+  Component(ticket, "Ticket + TicketState", "Domínio", "GoF State: ABERTO -> TRIADO -> ATRIBUIDO -> EM_ATENDIMENTO -> RESOLVIDO -> FECHADO")
+  Component(ports, "Ports", "Domínio", "InventoryPort, ClassifierPort (DIP)")
+  Component(triage, "TriageService", "Aplicação", "Caso de uso de triagem; sanitização de PII e validação de schema")
+  Component(tier, "ModelTieringClassifier", "Infra", "SLM local, escalona ao LLM se confiança < 0,7")
+  Component(adapter, "LegacyInventoryAdapter", "Infra (ACL)", "GoF Adapter: XML -> DTO")
+  Component(cb, "ResilientInventory", "Infra", "Circuit Breaker + fallback")
+  Component(broker, "MessageBroker", "Infra", "Retry exponencial e DLQ")
+}
+Rel(triage, ticket, "Aplica transições")
+Rel(triage, ports, "Depende de")
+Rel(tier, ports, "Implementa ClassifierPort")
+Rel(adapter, ports, "Implementa InventoryPort")
+Rel(cb, adapter, "Decora")
+Rel(broker, triage, "Entrega mensagens")
+@enduml

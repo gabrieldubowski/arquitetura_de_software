@@ -1,0 +1,12 @@
+{
+  "name": "sysop-squad",
+  "version": "1.0.0",
+  "description": "Sysop Squad - triagem inteligente de chamados técnicos (Architectural Kata)",
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "demo": "node src/index.js",
+    "start": "python3 -m http.server 8080"
+  },
+  "license": "MIT"
+}

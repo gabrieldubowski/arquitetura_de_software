@@ -1,0 +1,21 @@
+@startuml nivel1-contexto
+!include <C4/C4_Context>
+title Sysop Squad - Nível 1: Diagrama de Contexto
+
+Person(lojas, "Lojas", "Usuários que abrem e acompanham chamados (1.000 lojas)")
+Person(consultores, "Consultores de TI", "Recebem e atendem os chamados")
+System(sysop, "Sysop Squad", "Sistema de tickets para suporte técnico, com roteamento inteligente")
+System_Ext(email, "Serviço de Email", "Envia notificações")
+System_Ext(loc, "Serviço de Localização", "Localização das lojas e consultores")
+System_Ext(rh, "Sistema de RH", "Habilidades e disponibilidade dos consultores")
+System_Ext(llm, "LLM em Nuvem", "Classificação de casos ambíguos (sem PII)")
+System_Ext(inv, "Inventário Legado", "Ativos (XML)")
+
+Rel(lojas, sysop, "Abre, consulta e atualiza chamados", "HTTPS")
+Rel(sysop, consultores, "Direciona e informa chamados", "HTTPS/Email")
+Rel(sysop, email, "Notificações", "SMTP/API")
+Rel(sysop, loc, "Consulta localização", "HTTPS/JSON")
+Rel(sysop, rh, "Consulta habilidades e disponibilidade", "HTTPS/JSON")
+Rel(sysop, llm, "Classifica texto", "HTTPS/JSON")
+Rel(sysop, inv, "Consulta ativos", "XML")
+@enduml
