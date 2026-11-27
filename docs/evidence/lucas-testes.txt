@@ -1,0 +1,22 @@
+✔ mensagem bem-sucedida não é retentada (1.159493ms)
+✔ falhas transitórias recuperam sem DLQ (0.304575ms)
+✔ três retries após a tentativa inicial e envio à DLQ (0.123114ms)
+✔ mensagem com falha não impede a próxima de ser processada (0.157396ms)
+✔ zero retries envia a mensagem à DLQ na primeira falha (0.157916ms)
+✔ configuração inválida de retry é rejeitada (0.306899ms)
+✔ circuito aberto não chama a dependência (0.23387ms)
+✔ probe bem-sucedido fecha o circuito após 30 segundos (0.156193ms)
+✔ probe com falha reabre o circuito (0.204896ms)
+✔ half-open permite somente uma chamada de prova simultânea (0.21411ms)
+✔ timeout não permite aguardar indefinidamente (10.428294ms)
+✔ inventário lento devolve fallback com timeout e abre circuito (10.566601ms)
+✔ inventário disponível preserva resposta original (0.195683ms)
+✔ configuração inválida do breaker é rejeitada (0.12682ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 94.23644
