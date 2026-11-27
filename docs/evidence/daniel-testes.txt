@@ -1,0 +1,24 @@
+✔ domínio não importa infraestrutura nem aplicação (1.402595ms)
+✔ aplicação não importa infraestrutura (0.310614ms)
+✔ adapter de inventário implementa a porta (0.188202ms)
+✔ classificador implementa a porta (0.101201ms)
+✔ chamado nasce aberto (0.86346ms)
+✔ ciclo completo respeita os estados e registra histórico (0.25418ms)
+✔ não pode fechar chamado aberto (0.34134ms)
+✔ não pode iniciar antes de atribuir (0.160911ms)
+✔ categoria inválida não modifica o chamado (0.133049ms)
+✔ atribuição vazia não avança o estado (0.114211ms)
+✔ atribuição exige identificador textual (0.097706ms)
+✔ resolvido pode reabrir para atendimento mantendo técnico (0.131166ms)
+✔ fechado é terminal (3.517735ms)
+✔ roteamento sem consultor mantém chamado triado (0.328171ms)
+✔ estratégia prioriza habilidade e região entre disponíveis (0.171917ms)
+✔ outra Strategy pode ser injetada sem mudar RoutingService (0.139218ms)
+ℹ tests 16
+ℹ suites 0
+ℹ pass 16
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 82.972109
