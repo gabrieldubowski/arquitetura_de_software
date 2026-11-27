@@ -1,3 +1,5 @@
+import { CATEGORIES } from '../ports.js';
+
 // GoF State: cada estado conhece as transições válidas do chamado.
 export class IllegalTransitionError extends Error {}
 
@@ -16,11 +18,17 @@ export class TicketState {
 
 export class OpenState extends TicketState {
   get name() { return 'ABERTO'; }
-  triage(ticket, category) { ticket.category = category; ticket.setState(new TriagedState()); }
+  triage(ticket, category) {
+    if (!CATEGORIES.includes(category)) throw new TypeError('Categoria inválida');
+    ticket.category = category; ticket.setState(new TriagedState());
+  }
 }
 export class TriagedState extends TicketState {
   get name() { return 'TRIADO'; }
-  assign(ticket, technician) { ticket.technician = technician; ticket.setState(new AssignedState()); }
+  assign(ticket, technician) {
+    if (typeof technician !== 'string' || !technician.trim()) throw new TypeError('Técnico é obrigatório');
+    ticket.technician = technician.trim(); ticket.setState(new AssignedState());
+  }
 }
 export class AssignedState extends TicketState {
   get name() { return 'ATRIBUIDO'; }

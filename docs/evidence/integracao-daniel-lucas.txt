@@ -1,0 +1,43 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> sysop-squad@1.0.0 test
+> node --test "tests/*.test.js"
+
+✔ domínio não importa infraestrutura nem aplicação (1.029478ms)
+✔ aplicação não importa infraestrutura (0.182502ms)
+✔ adapter de inventário implementa a porta (0.062052ms)
+✔ classificador implementa a porta (0.182002ms)
+✔ chamado nasce aberto (4.019816ms)
+✔ ciclo completo respeita os estados e registra histórico (0.293699ms)
+✔ não pode fechar chamado aberto (0.401039ms)
+✔ não pode iniciar antes de atribuir (0.177786ms)
+✔ categoria inválida não modifica o chamado (0.175372ms)
+✔ atribuição vazia não avança o estado (0.110245ms)
+✔ atribuição exige identificador textual (0.059149ms)
+✔ resolvido pode reabrir para atendimento mantendo técnico (0.079649ms)
+✔ fechado é terminal (0.091056ms)
+✔ roteamento sem consultor mantém chamado triado (0.218526ms)
+✔ estratégia prioriza habilidade e região entre disponíveis (0.150565ms)
+✔ outra Strategy pode ser injetada sem mudar RoutingService (0.09392ms)
+✔ mensagem bem-sucedida não é retentada (1.009579ms)
+✔ falhas transitórias recuperam sem DLQ (0.267179ms)
+✔ três retries após a tentativa inicial e envio à DLQ (0.154672ms)
+✔ mensagem com falha não impede a próxima de ser processada (0.151126ms)
+✔ zero retries envia a mensagem à DLQ na primeira falha (0.132698ms)
+✔ configuração inválida de retry é rejeitada (0.263123ms)
+✔ circuito aberto não chama a dependência (0.209654ms)
+✔ probe bem-sucedido fecha o circuito após 30 segundos (0.146439ms)
+✔ probe com falha reabre o circuito (0.153779ms)
+✔ half-open permite somente uma chamada de prova simultânea (0.219958ms)
+✔ timeout não permite aguardar indefinidamente (10.033561ms)
+✔ inventário lento devolve fallback com timeout e abre circuito (10.565286ms)
+✔ inventário disponível preserva resposta original (0.199298ms)
+✔ configuração inválida do breaker é rejeitada (0.062573ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.804413
