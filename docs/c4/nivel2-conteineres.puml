@@ -1,0 +1,39 @@
+@startuml nivel2-conteineres
+!include <C4/C4_Container>
+title Sysop Squad - Nível 2: Diagrama de Contêineres
+
+Person(cliente, "Lojas")
+Person(tecnico, "Consultores de TI")
+System_Ext(llm, "LLM em Nuvem", "API HTTPS")
+System_Ext(inventario, "Inventário Legado", "XML")
+System_Ext(rh, "Sistema de RH", "Habilidades e disponibilidade")
+System_Ext(locsvc, "Serviço de Localização", "Lojas e consultores")
+
+System_Boundary(s, "Sysop Squad") {
+  Container(web, "Web App", "HTML/CSS/JS", "Interface de chamados")
+  Container(gw, "API Gateway", "Node.js", "Roteamento, autenticação e rate limit")
+  Container(api, "Sysop Squad (Monólito Modular)", "Node.js", "Módulos: Tickets (State), Consultores e Roteamento (Strategy)")
+  Container(mq, "Message Broker", "RabbitMQ", "Fila de triagem, retry exponencial e DLQ")
+  Container(worker, "Triage Worker", "Node.js", "Consome fila e orquestra agentes de IA com guardrails")
+  Container(ai, "AI Agents", "SLM local + client LLM", "Model Tiering: SLM local, LLM em nuvem como escalonamento")
+  ContainerDb(vec, "Banco Vetorial", "pgvector", "Base de conhecimento (RAG) de soluções")
+  ContainerDb(db, "Banco de Dados", "PostgreSQL", "Chamados e histórico")
+  Container(acl, "ACL Inventário", "Node.js Adapter + Circuit Breaker", "Traduz XML legado para DTO")
+}
+
+Rel(cliente, web, "Usa", "HTTPS")
+Rel(tecnico, web, "Usa", "HTTPS")
+Rel(web, gw, "Chama", "REST/JSON")
+Rel(gw, api, "Encaminha", "REST/JSON")
+Rel(api, db, "Lê/grava", "SQL")
+Rel(api, mq, "Publica ticket.created", "AMQP")
+Rel(mq, worker, "Entrega mensagens", "AMQP")
+Rel(worker, ai, "Classifica", "chamada local")
+Rel(ai, vec, "Busca similares", "SQL/vetor")
+Rel(ai, llm, "Escalona casos ambíguos", "HTTPS/JSON")
+Rel(worker, acl, "Consulta ativo", "chamada local")
+Rel(acl, inventario, "Consulta", "XML")
+Rel(api, rh, "Habilidades/disponibilidade", "HTTPS/JSON")
+Rel(api, locsvc, "Localização", "HTTPS/JSON")
+Rel(worker, api, "Atualiza estado do chamado", "REST")
+@enduml
