@@ -1,18 +1,18 @@
-# ADR-005: Seleção de stack (Node.js, RabbitMQ, PostgreSQL + pgvector)
+# ADR-005: Stack do demonstrador e infraestrutura projetada
 
-- **Status:** Aprovado
-- **Data:** 2026-11-26
+**Status:** Proposto — revisão e aceite da equipe pendentes.
 
 ## Contexto
-Entrega acadêmica com prazo curto, equipe com conhecimento em JavaScript.
+A base do PR #2 usa JavaScript ES Modules, HTML/CSS, Node.js e servidor estático Python. Não há comprovação de domínio prévio de uma linguagem pela equipe.
 
 ## Decisão
-**Node.js/JavaScript** (ES Modules) + HTML/CSS, **RabbitMQ**, **PostgreSQL com pgvector** (um só banco para relacional e vetorial) e API Gateway leve em Node.
+Manter essa stack para a demonstração existente. RabbitMQ, banco persistente e gateway são componentes projetados, não conectados no código atual. Decidir se PostgreSQL/pgvector é realmente necessário antes de incluir como dependência; RAG não é requisito comprovado deste demonstrador.
 
 ## Alternativas rejeitadas
-- Java/.NET: maior robustez, mas curva e tempo de setup maiores.
-- Banco vetorial dedicado (Pinecone, Milvus): custo e complexidade operacional extras.
+Uma migração completa de linguagem exige avaliar prazo e esforço. Banco vetorial sem busca implementada adiciona uma responsabilidade sem evidência de benefício.
 
-## Consequências / Trade-offs
-(+) Rapidez de entrega, menos peças móveis.
-(-) Tipagem fraca em JS (mitigada por testes); pgvector escala menos que soluções dedicadas.
+## Consequências e trade-offs
+JavaScript facilita reprodução local mas não atende por si só à exigência de ArchUnit. Resolver com professor/implementação Java antes de declarar conformidade. A base Java anteriormente preparada é alternativa distinta e não deve ser misturada sem revisão.
+
+## Validação e aceite
+Identificar os testes pertinentes, responsáveis e evidências antes do aceite. Não confundir arquitetura projetada com infraestrutura implantada.

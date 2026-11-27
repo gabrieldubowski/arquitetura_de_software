@@ -1,18 +1,18 @@
-# ADR-003: Protocolos de integração (REST e AMQP/RabbitMQ)
+# ADR-003: Protocolos de comunicação
 
-- **Status:** Aprovado
-- **Data:** 2026-11-26
+**Status:** Proposto na Sprint 3; implementação integral não comprovada.
 
 ## Contexto
-Precisamos de interação síncrona com a UI e processamento assíncrono resiliente de triagem.
+A Sprint 3 registra a ADR 003 como Proposto. Chamadas imediatas e processamento de roteamento têm necessidades diferentes.
 
 ## Decisão
-**REST/JSON** entre UI, gateway e API. **AMQP (RabbitMQ)** entre API e worker, com filas **DLQ** e **retry exponencial** (100ms, 200ms, 400ms...).
+REST/JSON para interações síncronas; RabbitMQ/AMQP para solicitações assíncronas. Registrar o ticket antes do envio. A ADR 007 detalha broker e outbox proposta.
 
 ## Alternativas rejeitadas
-- gRPC: ganho de desempenho desnecessário neste cenário e UI web.
-- Kafka: poder de streaming excessivo; RabbitMQ atende melhor filas de trabalho com DLQ.
+REST integralmente síncrono acopla disponibilidade. Kafka e gRPC interno não justificaram complexidade adicional no cenário estudado; não são incapazes de suportar a carga.
 
-## Consequências / Trade-offs
-(+) Load leveling nos picos de meia-noite, mensagens nunca perdidas (DLQ).
-(-) Consistência eventual; é preciso monitorar a DLQ.
+## Consequências e trade-offs
+Consistência eventual, contratos versionados, filas observáveis. DLQ não garante zero perda; confirmar publicação, tratar reentrega e persistir efeitos. O MessageBroker.js atual simula filas e não implementa AMQP.
+
+## Validação e aceite
+Identificar os testes pertinentes, responsáveis e evidências antes do aceite. Não confundir arquitetura projetada com infraestrutura implantada.

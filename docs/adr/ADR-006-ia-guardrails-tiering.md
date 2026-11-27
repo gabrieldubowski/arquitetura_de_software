@@ -1,18 +1,18 @@
-# ADR-006: Agentes de IA, Model Tiering e Guardrails
+# ADR-006: Ecossistema de agentes, tiering e limites de autonomia
 
-- **Status:** Aprovado
-- **Data:** 2026-11-26
+**Status:** Proposto — revisão e aceite da equipe pendentes.
 
 ## Contexto
-Classificar chamados por IA com custo controlado e sem expor dados pessoais.
+O enunciado exige classificação por IA multiagente. O código LocalSlmClassifier utiliza regex; CloudLlmClassifier retorna resultado fixo. São simuladores e não modelos reais.
 
 ## Decisão
-**Model Tiering**: SLM local primeiro; escala ao LLM em nuvem se a confiança for < 0,7. **Guardrails**: higienização de PII antes do envio, validação de schema da saída e fallback para categoria `GERAL` (revisão humana).
+Projetar agente classificador e agente validador com contratos separados, coordenados por um orquestrador. Validar categoria e confiança; desacordo/baixa confiança encaminham à revisão humana. Agentes não podem executar comandos ou encerrar chamados. Tiering pode escolher modelos dentro de um agente, sem substituir a coordenação multiagente.
 
 ## Alternativas rejeitadas
-- Somente LLM em nuvem: custo/latência altos e risco de privacidade.
-- Somente regras: baixa cobertura semântica.
+Chamar um único LLM pode não atender ao desafio multiagente. Regex serve para testes, não comprova classificação por modelo. Autonomia irrestrita amplia risco sem necessidade.
 
-## Consequências / Trade-offs
-(+) Custo menor, privacidade, saída previsível.
-(-) Duas rotas de modelo para manter; SLM pode errar em casos novos (mitigado pelo escalonamento).
+## Consequências e trade-offs
+Dois agentes adicionam custo e latência. Sanitização atual cobre somente alguns padrões de PII; não garante remoção de todos os dados pessoais. Integração com provedor, credenciais, avaliação de precisão, limites de custo e observabilidade estão pendentes. Não há RAG/pgvector implementado.
+
+## Validação e aceite
+Identificar os testes pertinentes, responsáveis e evidências antes do aceite. Não confundir arquitetura projetada com infraestrutura implantada.
