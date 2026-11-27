@@ -1,18 +1,9 @@
-# ADR-004: Contextos Delimitados e Camada Anti-Corrupção
+# Registro de migração de caminho — DDD e ACL
 
-- **Status:** Aprovado
-- **Data:** 2026-11-26
+Este caminho foi introduzido no PR #2 com o identificador ADR 004. Porém a ADR 004 original da Sprint 3 já identifica a decisão de resiliência.
 
-## Contexto
-O inventário legado fala XML e usa outro vocabulário (`assetId`, `warranty`).
+Para preservar o histórico:
+- [ADR 004 original — Resiliência](ADR-004-resiliencia.md).
+- [ADR 008 — Contextos delimitados e ACL](ADR-008-bounded-contexts-acl.md).
 
-## Decisão
-Isolar o legado em um contexto próprio com **ACL** implementada por um **Adapter** protegido por **Circuit Breaker** com fallback.
-
-## Alternativas rejeitadas
-- Chamar o legado diretamente do domínio: corrompe a linguagem ubíqua.
-- Reescrever o legado: fora do escopo e do prazo.
-
-## Consequências / Trade-offs
-(+) Domínio limpo; falhas do legado não derrubam a triagem (degradação graciosa).
-(-) Camada extra de tradução para manter.
+Este arquivo é um aviso de migração, não uma nona decisão nem um registro de substituição da resiliência por DDD. Atualizar os links para os caminhos canônicos.

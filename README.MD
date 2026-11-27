@@ -1,84 +1,102 @@
-# Sysop Squad - Suporte Técnico e Ticketing
+# Sysop Squad — Suporte Técnico e Ticketing
 
-> Architectural Kata nº 5 | Arquitetura de Software, 6º Período, Engenharia de Software | Sprint 4
+Architectural Kata 5 — Arquitetura de Software, 6º período de Engenharia de Software, UniSENAI PR.
 
-## Equipe
-| Integrante | Função na Sprint 4 | GitHub |
+## Equipe e responsabilidade histórica
+| Sprint | Responsável informado pelo grupo | GitHub confirmado |
 |---|---|---|
-| Rafael Romero | Líder & Arquiteto Principal | @Rafabigode |
-| Lucas Martins | Pesquisador & Modelagem DDD | @[usuario-github] |
-| Daniel Armando | Executor & Resiliência/Integração | @[usuario-github] |
-| Gabriel França | Executor & QA & Fitness Functions | @[usuario-github] |
+| 1 | Rafael Romero | @Rafabigode |
+| 2 | Daniel Armando | Não informado |
+| 3 | Lucas Martins | @martinssluc |
+| 4 | Gabriel França | @gabrieldubowski |
 
-## 1. Visão Geral
-**Contexto:** o Sysop Squad é o motor de suporte técnico de uma rede varejista com **1.000 lojas de eletrônicos**. Os chamados são direcionados aos consultores de TI considerando **localização, habilidade e disponibilidade**, respeitando a **LGPD** (coleta mínima de dados dos consultores). Uptime é requisito de operação.
+Gabriel é o responsável pela Sprint 4. Os papéis históricos não substituem a autoria individual registrada nos commits e PRs. A configuração inicial do repositório e do formulário de PR é distinta da contribuição técnica final.
 
-**Desafio:** criar a triagem e o roteamento inteligente de chamados técnicos com **IA multi-agente**, integrada a um **sistema legado de inventário** (XML), mantendo tolerância a falhas nos picos de submissão.
+## 1. Contexto e desafio
+O sistema registra e encaminha chamados de lojas a consultores, considerando habilidade, localização e disponibilidade. A BOTE da Sprint 1 supõe 1.000 lojas e 10 tickets por loja/dia: são hipóteses acadêmicas, não dados de uma implantação. A estimativa resulta em cerca de 23–25 requisições/s no pico e 4,5 TB de armazenamento em cinco anos.
 
-**Solução:** monólito modular (Ticketing, Triage/AI, Inventory) com um worker assíncrono. Chamados entram por REST, são publicados no **RabbitMQ** (com retry exponencial e DLQ) e classificados por agentes de IA com **Model Tiering** (SLM local, LLM em nuvem só se a confiança for baixa) e guardrails (PII e schema). O inventário legado é isolado por uma **ACL** (Adapter + Circuit Breaker). O ciclo de vida do chamado usa o padrão **State**.
+O desafio final exige triagem e roteamento com classificação por IA multiagente, integração com inventário legado, RabbitMQ com DLQ/retry, ADR de agentes e implementação State. Disponibilidade, resiliência e escalabilidade orientam as decisões.
 
-## 2. Atributos de Qualidade (QAW)
-| Atributo | Cenário (Fonte → Estímulo → Artefato → Ambiente → Resposta) | Medida |
+## 2. Solução proposta e demonstração disponível
+A arquitetura proposta mantém núcleo modular e worker de roteamento desacoplado. A interação imediata utiliza REST/JSON; a mensageria projetada utiliza RabbitMQ/AMQP. A ACL protege o domínio das particularidades do inventário. O ciclo dos tickets utiliza State.
+
+A implementação JavaScript atual é uma demonstração local: filas em arrays, inventário XML simulado, repositório de tickets sem banco durável e classificadores por regras/resposta fixa. O navegador executa módulos locais e um servidor Python entrega arquivos estáticos. Não há API REST operacional, RabbitMQ conectado, agentes de modelos reais, PostgreSQL, pgvector ou RAG implementados nesta base.
+
+**Model Tiering não comprova multiagentes.** As classes LocalSlmClassifier e CloudLlmClassifier representam uma alternância simulada de classificadores. A coordenação efetiva de agentes com modelos deve ser implementada e validada, conforme a ADR 006.
+
+## 3. Requisitos de qualidade
+| Atributo | Cenário e resposta esperada | Meta proposta, não medida |
 |---|---|---|
-| 1. Disponibilidade | Usuários das lojas → abrem/consultam chamados → Sysop Squad → produção → continua recebendo chamados | Uptime alto; abertura de ticket nunca depende do roteamento |
-| 2. Resiliência | Mecanismo de roteamento/inventário indisponível → falha → Router/ACL → produção → chamado fica registrado aguardando roteamento (fila, Circuit Breaker, fallback) | 0 tickets perdidos |
-| 3. Escalabilidade | Lojas → pico simultâneo de abertura/consulta → Sysop Squad → pico de uso → processa sem ficar indisponível | ~25 req/s de pico, taxa de erro < 1% |
+| Disponibilidade | A loja abre ticket enquanto o roteador falha; núcleo registra e mantém pendência | Conciliar todos os tickets confirmados após recuperação; exige persistência/outbox |
+| Resiliência | Inventário fica lento ou indisponível; timeout, breaker e fallback evitam espera indefinida | Timeout 1,5 s e até 3 retries; política completa da ADR 004 ainda não validada |
+| Escalabilidade | Aumento de mensagens na carga estimada; fila absorve variação | 25 msg/s por 60 min e 75 msg/s por 15 min; metas da ADR 007 |
+| Integridade | Há reentrega após falha; consumidor evita duplicar o efeito de negócio | Idempotência durável e conciliação por evento; não implementadas |
 
-**Análise BOTE (Sprint 1):** 1.000 lojas × 10 tickets/dia = 10.000 tickets/dia; × 20 requisições por ticket = 200.000 req/dia ≈ 2,3 req/s; pico de 10× ≈ **23 a 25 req/s**. Armazenamento: 250 KB/ticket → 2,5 GB/dia → ≈ 912 GB/ano → **≈ 4,5 TB em 5 anos**. Essa carga não justifica microsserviços (ver ADR-001).
+Não usar a existência de DLQ como garantia de zero perda. A demo em memória perde filas ao encerrar o processo.
 
-## 3. Modelo C4
-- Nível 1, Contexto: [`docs/c4/nivel1-contexto.puml`](docs/c4/nivel1-contexto.puml)
-- Nível 2, Contêineres (com container de IA e banco vetorial): [`docs/c4/nivel2-conteineres.puml`](docs/c4/nivel2-conteineres.puml)
-- Nível 3, Componentes: [`docs/c4/nivel3-componentes.puml`](docs/c4/nivel3-componentes.puml)
+## 4. Diagramas e domínio
+- [C1 — Contexto](docs/c4/nivel1-contexto.puml)
+- [C2 — Contêineres](docs/c4/nivel2-conteineres.puml)
+- [C3 — Componentes](docs/c4/nivel3-componentes.puml)
+- [DDD e contextos](docs/ddd.md)
 
-Renderize colando os arquivos em <https://www.plantuml.com/plantuml>.
+Os diagramas devem separar recursos projetados de recursos efetivamente implementados. A presença de banco vetorial ou gateway em um desenho não comprova sua execução. A equipe deve conferir a coerência dos três níveis após cada alteração.
 
-## 4. DDD
-Veja [`docs/ddd.md`](docs/ddd.md).
-- **Core:** triagem e roteamento inteligente · **Supporting:** notificações/SLA · **Generic:** SSO, LLM de terceiros.
-- **ACL:** `src/infrastructure/LegacyInventoryAdapter.js` isola o XML legado.
+## 5. SOLID e padrões
+| Elemento | Arquivo | Papel |
+|---|---|---|
+| DIP — portas | src/domain/ports.js | InventoryPort e ClassifierPort isolam infraestrutura |
+| State | src/domain/ticket/TicketState.js | Regras por estado do chamado |
+| Adapter / ACL | src/infrastructure/LegacyInventoryAdapter.js | Tradução do XML simulado para DTO |
+| Strategy | src/domain/routing/RoutingStrategy.js | Seleção por habilidade, região e disponibilidade |
+| Decorator / breaker | src/infrastructure/CircuitBreaker.js | Proteção do inventário e fallback |
 
-## 5. SOLID e GoF
-- **DIP:** o domínio declara `InventoryPort` e `ClassifierPort` (`src/domain/ports.js`); a infraestrutura implementa.
-- **OCP:** novo estado ou classificador sem alterar o código existente.
+A aplicação de padrões não dispensa testes de invariantes. A extensão de estados pode exigir alterações explícitas nas transições e deve ser revisada; não se afirma que toda extensão ocorre sem modificar código existente.
 
-| Padrão | Categoria | Local | Problema resolvido |
-|---|---|---|---|
-| State | Comportamental | `src/domain/ticket/TicketState.js` | Ciclo de vida do chamado sem `if/else` |
-| Adapter | Estrutural | `src/infrastructure/LegacyInventoryAdapter.js` | Traduz XML legado para DTO |
-| Strategy (roteamento) | Comportamental | `src/domain/routing/RoutingStrategy.js` | Escolhe o consultor por habilidade, localização e disponibilidade |
-| Strategy (tiering) | Comportamental | `src/infrastructure/ModelTieringClassifier.js` | Alterna SLM e LLM |
-| Decorator | Estrutural | `src/infrastructure/CircuitBreaker.js` | Adiciona resiliência ao inventário |
+## 6. Decisões arquiteturais
+| ADR | Assunto | Situação nesta consolidação |
+|---|---|---|
+| [001](docs/adr/ADR-001-estilo-arquitetural.md) | Monólito modular e roteamento assíncrono | Aceito na Sprint 1, conforme documento recebido |
+| [002](docs/adr/ADR-002-dip-e-gof.md) | DIP e padrões | Proposto; o documento final da Sprint 2 não foi recebido |
+| [003](docs/adr/ADR-003-protocolos-integracao.md) | REST/JSON e RabbitMQ/AMQP | Proposto na Sprint 3 |
+| [004](docs/adr/ADR-004-resiliencia.md) | Timeout, retry, breaker e fallback | Proposto na Sprint 3 |
+| [005](docs/adr/ADR-005-stack-tecnologica.md) | Stack demonstrativa JavaScript | Proposto para consolidação final |
+| [006](docs/adr/ADR-006-ia-guardrails-tiering.md) | Ecossistema de agentes e guardrails | Proposto para consolidação final |
+| [007](docs/adr/ADR-007-selecao-broker.md) | Seleção do broker e TCO | Proposto na entrega histórica da Sprint 4 |
+| [008](docs/adr/ADR-008-bounded-contexts-acl.md) | DDD e ACL do inventário | Proposto; reorganiza o conteúdo que colidia com ADR 004 |
 
-## 6. Resiliência e IA-Native
-- **Circuit Breaker + Fallback:** `CircuitBreaker.js` (estados CLOSED, OPEN e HALF_OPEN).
-- **Mensageria:** `MessageBroker.js` simula o RabbitMQ com **retry exponencial** (100, 200, 400 ms) e **DLQ**.
-- **IA:** Model Tiering (SLM local, LLM em nuvem) e RAG sobre pgvector. **Guardrails:** `sanitizePII` e `validateClassification` em `TriageService.js`.
+O caminho antigo ADR-004-bounded-contexts-acl.md foi mantido como aviso de migração. Os IDs históricos 003, 004 e 007 e seus status são preservados. A equipe pode registrar aceite posterior com responsável, data e evidência reais; essa aprovação não é presumida pela criação destes arquivos.
 
-## 7. ADRs
-| ADR | Título | Status | Data |
-|---|---|---|---|
-| [001](docs/adr/ADR-001-estilo-arquitetural.md) | Monólito Modular + Worker | Aprovado | 2026-11-26 |
-| [002](docs/adr/ADR-002-dip-e-gof.md) | DIP e padrões GoF | Aprovado | 2026-11-26 |
-| [003](docs/adr/ADR-003-protocolos-integracao.md) | REST e RabbitMQ | Aprovado | 2026-11-26 |
-| [004](docs/adr/ADR-004-bounded-contexts-acl.md) | Contextos e ACL | Aprovado | 2026-11-26 |
-| [005](docs/adr/ADR-005-stack-tecnologica.md) | Stack tecnológica | Aprovado | 2026-11-26 |
-| [006](docs/adr/ADR-006-ia-guardrails-tiering.md) | IA, Tiering e Guardrails | Aprovado | 2026-11-26 |
+## 7. Execução local
+Requer Node.js 20+; a configuração de CI da base usa Node 22. A interface estática requer Python 3.
 
-## 8. Fitness Functions
-`tests/architecture.test.js` (equivalente ao ArchUnit em JS, usando `node:test`):
-1. Domínio não importa Infraestrutura.
-2. Domínio não importa Aplicação.
-3. Aplicação não importa Infraestrutura (só portas).
-4. Implementações de porta estendem a abstração do domínio.
-
-## Como executar
 ```bash
-npm test        # testes de unidade + fitness functions
-npm run demo    # fluxo no terminal
-npm start       # interface web em http://localhost:8080/public/
+npm run demo
+npm test
+npm start
 ```
-Requer Node 20+ (sem dependências externas). O workflow `.github/workflows/ci.yml` executa `npm test` (incluindo as Fitness Functions) a cada Pull Request.
 
-## Fluxo de Git
-Nada de commit direto na `main`. Use `feature/nome-aluno`, abra o PR com o template e peça revisão de um colega.
+Após npm start: http://localhost:8080/public/ . Trata-se de servidor estático e execução local, sem backend persistente. Não inserir dados reais; revisar o uso de innerHTML com descrição do ticket antes de disponibilizar a interface a terceiros.
+
+`npm test` depende de arquivos em tests/. O PR #2 originalmente não os incluía. A contribuição do Lucas adiciona tests/integracao-resiliencia.test.js; a de Daniel deve tratar State e isolamento arquitetural. Executar novamente após integrar todos os PRs, sem declarar que um log isolado comprova a integração final.
+
+## 8. Testes e diferença de stack
+Os testes JavaScript com node:test não são ArchUnit. A atividade exige ArchUnit; permanece necessário implementar a parte exigida em Java ou obter do professor aceite explícito e registrado para uma alternativa. Não declarar equivalência automática nem marcar essa exigência como cumprida.
+
+Na preparação da contribuição de Lucas, 14 testes locais foram aprovados. Isso não comprova testes executados pessoalmente pelos demais integrantes nem execução do CI da main. Novos resultados devem incluir comando, versão, data e commit testado.
+
+## 9. Entrega individual e revisão
+Usar branches individuais e PRs com defesa técnica. Cada integrante deve revisar pelo menos um colega. A main exige aprovação; não usar aprovação própria ou atribuição fictícia de contribuição.
+
+[Consolidação e checklist de entrega](docs/entrega-final/checklist-gabriel.md) · [Rastreabilidade da ADR 007](docs/entrega-final/registro-consolidacao.md).
+
+## 10. Limitações e próximos passos
+- Conectar RabbitMQ real, implementar confirmações, persistência e tratamento de duplicatas.
+- Implementar e avaliar coordenação multiagente real, minimização de PII e saída estruturada.
+- Completar política percentual do breaker e jitter da ADR 004; o código demonstrativo usa falhas consecutivas.
+- Resolver ArchUnit/Java versus stack JavaScript adotada no demonstrador.
+- Renderizar/revisar C4 e alinhar modelos ao código real.
+- Validar as metas de desempenho, segurança e custos; não há benchmark ou orçamento de produção.
+
+## Fontes
+Documentos históricos fornecidos pela equipe; Sprint 4 / ADR 007 original em [docs/fontes/sprint4-adr007-original.pdf](docs/fontes/sprint4-adr007-original.pdf). A Sprint 3 original também está preservada para verificar ADRs 003 e 004.
